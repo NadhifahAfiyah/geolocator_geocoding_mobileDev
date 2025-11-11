@@ -32,6 +32,11 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _errorMessage;
   StreamSubscription<Position>? _positionStream;
   String? _currentAddress;
+  String? _distanceToPNB; //untuk menyimpan jarak ke titik tetap (PNB)
+
+  // koordinat Politeknik Negeri Banyuwangi
+  final double pnbLatitude = -8.2121;
+  final double pnbLongitude = 114.3696;
 
   @override
   void dispose() {
@@ -87,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
 
       _getAddressFromLatLng(position);
+      _updateDistance(position); // ditambahkan untuk lokasi pertama kali didapat, lalu dihitung jarak ke PNB
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -112,6 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _errorMessage = null;
             });
             _getAddressFromLatLng(position);
+            _updateDistance(position); // ditambahkan untuk setiap posisi yang berubah, hitung jarak ke titik tetap (real-time)
           }, onError: (e) {
             setState(() {
               _errorMessage = e.toString();
@@ -147,6 +154,21 @@ class _MyHomePageState extends State<MyHomePage> {
         _errorMessage = "Gagal mendapatkan alamat: ${e.toString()}";
       });
     }
+  }
+
+  // fungsi untuk menghitung jarak ke titik tetap (PNB)
+  // menggunakan fungsi Geolocator.distanceBetween
+  void _updateDistance(Position position) {
+    double distanceInMeters = Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      pnbLatitude,
+      pnbLongitude
+    );
+
+    setState((){
+      _distanceToPNB = "${distanceInMeters.toStringAsFixed(2)} meter";
+    });
   }
 
   @override
@@ -195,6 +217,19 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(
                               fontSize: 16,
                             ),
+                          ),
+                        ),
+                      if (_distanceToPNB != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Text(
+                            "Jarak ke PNB: $_distanceToPNB",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                     ],
